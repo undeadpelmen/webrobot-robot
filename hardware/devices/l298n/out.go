@@ -10,29 +10,29 @@ import (
 type Direction string
 
 const (
-	Forward  Direction = "Forward"
-	Backward Direction = "Backward"
-	Stop     Direction = "Stop"
+	Forward  Direction = "forward"
+	Backward Direction = "backward"
+	Stop     Direction = "stop"
 )
 
 type Out struct {
 	mu        sync.Mutex
 	direction Direction
-	enaPin    gpio.PinOut
-	enbPin    gpio.PinOut
+	in1Pin    gpio.PinOut
+	in2Pin    gpio.PinOut
 	speedPin  gpio.PinOut
 	speed     int
 }
 
-func NewOut(enaPin, enbPin, speedPin gpio.PinOut, speed int) (*Out, error) {
-	if enaPin == nil || enbPin == nil || speedPin == nil {
+func NewOut(in1Pin, in2Pin, speedPin gpio.PinOut, speed int) (*Out, error) {
+	if in1Pin == nil || in2Pin == nil || speedPin == nil {
 		return nil, errors.New("Pins can not be nil")
 	}
 
 	dev := &Out{
 		direction: Stop,
-		enaPin:    enaPin,
-		enbPin:    enbPin,
+		in1Pin:    in1Pin,
+		in2Pin:    in2Pin,
 		speedPin:  speedPin,
 	}
 
@@ -43,56 +43,21 @@ func NewOut(enaPin, enbPin, speedPin gpio.PinOut, speed int) (*Out, error) {
 	return dev, nil
 }
 
-func (o *Out) update(speed int, direction Direction) error {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-
-	if speed > 255 || speed < 0 {
-		return errors.New("Speed must be between 0 and 255")
-	}
-	o.speed = speed
-
-	if direction != Forward && direction != Stop && direction != Backward {
-		return errors.New("Unknown direcction")
-	}
-	o.direction = direction
-
-	var errA, errB error
-	switch o.direction {
-	case Forward:
-		errA = o.enaPin.Out(gpio.High)
-		errB = o.enbPin.Out(gpio.Low)
-	case Backward:
-		errA = o.enaPin.Out(gpio.Low)
-		errB = o.enbPin.Out(gpio.High)
-	case Stop:
-		errA = o.enaPin.Out(gpio.Low)
-		errB = o.enbPin.Out(gpio.Low)
-	}
-
-	if errA != nil {
-		return errA
-	}
-
-	if errB != nil {
-		return errB
-	}
-
-	if err := o.speedPin.PWM(gpio.Duty(o.speed*100/255), 0); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (o *Out) Speed() int {
 	return o.speed
 }
 
 func (o *Out) SetSpeed(speed int) error {
-	if err := o.update(speed, o.direction); err != nil {
-		return err
+	if speed > 255 || speed < 0 {
+		return errors.New("Speed must be between 0 and 255")
 	}
+
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	o.speed = speed
+
+	o.speedPin.PWM(gpio.Duty(speed*100/255), 0)
 
 	return nil
 }
@@ -102,15 +67,49 @@ func (o *Out) Direction() Direction {
 }
 
 func (o *Out) SetDirection(direction Direction) error {
-	if err := o.update(o.speed, direction); err != nil {
-		return err
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	switch direction {
+	case Forward:
+		if err := o.in1Pin.Out(gpio.High); err != nil {
+			return err
+		}
+		if err := o.in2Pin.Out(gpio.Low); err != nil {
+			return err
+		}
+
+	case Stop:
+		if err := o.in1Pin.Out(gpio.Low); err != nil {
+			return err
+		}
+		if err := o.in2Pin.Out(gpio.Low); err != nil {
+			return err
+		}
+
+	case Backward:
+		if err := o.in1Pin.Out(gpio.Low); err != nil {
+			return err
+		}
+		if err := o.in2Pin.Out(gpio.High); err != nil {
+			return err
+		}
+
+	default:
+		return errors.New("Wrong direction " + string(direction))
 	}
+
+	o.direction = direction
 
 	return nil
 }
 
 func (o *Out) Forward(speed int) error {
-	if err := o.update(speed, Forward); err != nil {
+	if err := o.SetDirection(Forward); err != nil {
+		return err
+	}
+
+	if err := o.SetSpeed(speed); err != nil {
 		return err
 	}
 
@@ -118,7 +117,11 @@ func (o *Out) Forward(speed int) error {
 }
 
 func (o *Out) Backward(speed int) error {
-	if err := o.update(speed, Backward); err != nil {
+	if err := o.SetDirection(Backward); err != nil {
+		return err
+	}
+
+	if err := o.SetSpeed(speed); err != nil {
 		return err
 	}
 
@@ -126,7 +129,7 @@ func (o *Out) Backward(speed int) error {
 }
 
 func (o *Out) Stop() error {
-	if err := o.update(o.speed, Stop); err != nil {
+	if err := o.SetDirection(Stop); err != nil {
 		return err
 	}
 

@@ -27,9 +27,10 @@ func NewFromPins(enaOut1Pin, enbOut1Pin, speedOut1Pin, enaOut2Pin, enbOut2Pin, s
 	}
 
 	out1 := &Out{
-		enaPin:   enaOut1Pin,
-		enbPin:   enbOut1Pin,
-		speedPin: speedOut1Pin,
+		in1Pin:    enaOut1Pin,
+		in2Pin:    enbOut1Pin,
+		speedPin:  speedOut1Pin,
+		direction: Stop,
 	}
 
 	if err := out1.SetSpeed(speed); err != nil {
@@ -37,9 +38,10 @@ func NewFromPins(enaOut1Pin, enbOut1Pin, speedOut1Pin, enaOut2Pin, enbOut2Pin, s
 	}
 
 	out2 := &Out{
-		enaPin:   enaOut2Pin,
-		enbPin:   enbOut2Pin,
-		speedPin: speedOut2Pin,
+		in1Pin:    enaOut2Pin,
+		in2Pin:    enbOut2Pin,
+		speedPin:  speedOut2Pin,
+		direction: Stop,
 	}
 
 	if err := out2.SetSpeed(speed); err != nil {
