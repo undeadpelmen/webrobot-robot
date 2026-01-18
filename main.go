@@ -1,13 +1,12 @@
 package main
 
 import (
-	"errors"
-	"fmt"
 	"log"
 	"os"
-	"strings"
 
+	"github.com/undeadpelmen/webrobot-robot/cli"
 	"github.com/undeadpelmen/webrobot-robot/hardware/devices/l298n"
+	"github.com/undeadpelmen/webrobot-robot/hardware/robots"
 	"github.com/undeadpelmen/webrobot-robot/hardware/robots/crawler"
 	"periph.io/x/conn/v3/gpio/gpiotest"
 )
@@ -17,11 +16,13 @@ var (
 )
 
 func main() {
-	logout, err := os.OpenFile("robot.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModeAppend)
+	logout, err := os.OpenFile("log/robot.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModeAppend)
 	if err != nil {
 		panic(err)
 	}
-	logout.Write([]byte("\n\n"))
+	if _, err := logout.Write([]byte("\n\n")); err != nil {
+		panic(err)
+	}
 
 	lg = log.New(logout, "", log.Ltime|log.Lshortfile)
 	defer logout.Close()
@@ -44,81 +45,20 @@ func main() {
 	cmdchan := make(chan string)
 	errchan := make(chan error, 10)
 	logchan := make(chan string, 10)
-	in := make(chan string)
 
 	lg.Println("Start robot gorutine")
-	go RobotControlFunc(cmdchan, errchan, logchan, robot)
+	go robots.RobotControlFunc(cmdchan, errchan, logchan, robot)
 
-	go func() {
-		var cmd string
-		for {
-			fmt.Scan(&cmd)
-			in <- cmd
-		}
-	}()
+	go cli.RobotCliFunc(cmdchan, errchan)
 
 	lg.Println("Start for loop chan reading")
 	for {
 		select {
-		case cmd := <-in:
-			lg.Println("Command:", cmd)
-			cmdchan <- cmd
-
 		case err := <-errchan:
 			lg.Panicln(err)
 
 		case msg := <-logchan:
 			lg.Print(msg)
-		}
-	}
-}
-
-type Robot interface {
-	SetSpeed(int) error
-	Forward() error
-	Stop() error
-	Backward() error
-	Left() error
-	Right() error
-}
-
-func RobotControlFunc(cmd chan string, errch chan error, logchan chan string, robot Robot) {
-	for {
-		command := strings.ToLower(<-cmd)
-
-		switch command {
-		case "forward":
-			if err := robot.Forward(); err != nil {
-				errch <- err
-			}
-			logchan <- fmt.Sprintln("Forward")
-
-		case "stop":
-			if err := robot.Stop(); err != nil {
-				errch <- err
-			}
-			logchan <- fmt.Sprintln("Stop")
-
-		case "backward":
-			if err := robot.Backward(); err != nil {
-				errch <- err
-			}
-			logchan <- fmt.Sprintln("Backward")
-
-		case "left":
-			if err := robot.Left(); err != nil {
-				errch <- err
-			}
-			logchan <- fmt.Sprintln("Left")
-
-		case "right":
-			if err := robot.Right(); err != nil {
-				errch <- err
-			}
-			logchan <- fmt.Sprintln("Right")
-
-		default:
-			errch <- errors.New("Wrong command: " + command)
 		}
 	}
 }
