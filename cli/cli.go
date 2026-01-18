@@ -57,6 +57,8 @@ func executor(str string) {
 		}
 
 		outch <- cmd
+	case "hi":
+		fmt.Println("Hello!!")
 	default:
 		fmt.Println("Unknown option: " + in[0])
 		fmt.Println("Use help to learn more")
