@@ -3,8 +3,27 @@ package robots
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 )
+
+var (
+	Commands []string = []string{
+		"stop",
+		"forward",
+		"backward",
+		"left",
+		"right",
+	}
+)
+
+func ValidCommand(cmd string) bool {
+	if !slices.Contains(Commands, cmd) {
+		return false
+	}
+
+	return true
+}
 
 type Robot interface {
 	SetSpeed(int) error
@@ -13,9 +32,10 @@ type Robot interface {
 	Backward() error
 	Left() error
 	Right() error
+	Status() string
 }
 
-func RobotControlFunc(cmd chan string, errch chan error, logchan chan string, robot Robot) {
+func RobotControlFunc(status *string, cmd chan string, errch chan error, logchan chan string, robot Robot) {
 	for {
 		command := strings.ToLower(<-cmd)
 
@@ -53,5 +73,7 @@ func RobotControlFunc(cmd chan string, errch chan error, logchan chan string, ro
 		default:
 			errch <- errors.New("Wrong command: " + command)
 		}
+
+		*status = robot.Status()
 	}
 }

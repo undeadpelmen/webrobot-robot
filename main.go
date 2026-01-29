@@ -13,16 +13,19 @@ import (
 	"github.com/undeadpelmen/webrobot-robot/hardware/devices/l298n"
 	"github.com/undeadpelmen/webrobot-robot/hardware/robots"
 	"github.com/undeadpelmen/webrobot-robot/hardware/robots/crawler"
+	"github.com/undeadpelmen/webrobot-robot/web/http"
 	"periph.io/x/conn/v3/gpio/gpiotest"
 )
 
 var (
 	logger zerolog.Logger
+	status string
 )
 
 func main() {
-	useCli := flag.Bool("cli", false, "use cli instead of hardware")
-	debug := flag.Bool("debug", false, "enable debug logging")
+	useCli := flag.Bool("c", false, "use cli instead of hardware")
+	useHttp := flag.Bool("h", false, "use http instead of hardware")
+	debug := flag.Bool("d", false, "enable debug logging")
 
 	flag.Parse()
 
@@ -30,7 +33,7 @@ func main() {
 	if _, ok := err.(*os.PathError); ok {
 		fmt.Println("Failed to open log file")
 
-		if err := os.Mkdir(filepath.Join(os.TempDir(), "/webrobot"), 0777); err != nil {
+		if err := os.Mkdir(filepath.Join(os.TempDir(), "/webrobot"), 0775); err != nil {
 			panic(err)
 		}
 
@@ -70,32 +73,38 @@ func main() {
 		logger.Panic().Err(err).Msg("")
 	}
 
+	status = robot.Status()
+
 	logger.Debug().Msg("Creating chanels")
 
-	// Creating chanels to transporting data in system
+	// Creating channels to transporting data in system
 	cmdchan := make(chan string)     // Chan for robot command
 	errchan := make(chan error, 10)  // Chan for error handling
 	logchan := make(chan string, 10) // Chan for logging
 
 	logger.Debug().Msg("Start robot gorutine")
-	go robots.RobotControlFunc(cmdchan, errchan, logchan, robot)
+	go robots.RobotControlFunc(&status, cmdchan, errchan, logchan, robot)
 
 	if *useCli {
-		// Start Cli gorutine
+		// Start Cli goroutine
 
 		logger.Debug().Msg("Start cli")
-		go cli.RobotCliFunc(cmdchan, errchan)
-	} else {
-		// Add close(CTRL + C) bind handler
-
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
-		go func() {
-			<-c
-
-			os.Exit(0)
-		}()
+		go cli.RobotCliFunc(&status, cmdchan, errchan)
 	}
+
+	if *useHttp {
+		logger.Debug().Msg("Start http")
+		go http.RobotHttpFunc(&status, cmdchan, errchan)
+	}
+
+	// Create CTRL + C shortcut to close the program
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+
+		os.Exit(0)
+	}()
 
 	logger.Debug().Msg("Start loop chan reading")
 	for {

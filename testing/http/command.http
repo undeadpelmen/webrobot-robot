@@ -1,0 +1,10 @@
+### Send command to robot
+POST localhost:8080/robot/api/command
+Content-Type: "application/json"
+
+{
+    "command": "left",
+    "id": "randomid",
+    "message": "some msg"
+}
+

@@ -8,10 +8,11 @@ import (
 )
 
 type Crawler struct {
-	left  Front
-	right Front
-	speed int
-	mu    sync.Mutex
+	left      Front
+	right     Front
+	speed     int
+	mu        sync.Mutex
+	direction string
 }
 
 type Front interface {
@@ -26,8 +27,9 @@ func New(front, right Front) (*Crawler, error) {
 	}
 
 	dev := &Crawler{
-		left:  front,
-		right: right,
+		left:      front,
+		right:     right,
+		direction: "stop",
 	}
 
 	return dev, nil
@@ -43,8 +45,9 @@ func NewFromDriver(driver *l298n.L298N) (*Crawler, error) {
 	}
 
 	dev := &Crawler{
-		left:  driver.Out1(),
-		right: driver.Out2(),
+		left:      driver.Out1(),
+		right:     driver.Out2(),
+		direction: "stop",
 	}
 
 	return dev, nil
@@ -74,6 +77,8 @@ func (c *Crawler) Forward() error {
 		return err
 	}
 
+	c.direction = "forward"
+
 	return nil
 }
 
@@ -88,6 +93,8 @@ func (c *Crawler) Stop() error {
 		return err
 	}
 
+	c.direction = "stop"
+
 	return nil
 }
 
@@ -98,10 +105,11 @@ func (c *Crawler) Backward() error {
 	if err := c.left.Backward(c.speed); err != nil {
 		return err
 	}
-
 	if err := c.right.Backward(c.speed); err != nil {
 		return err
 	}
+
+	c.direction = "backward"
 
 	return nil
 }
@@ -113,10 +121,11 @@ func (c *Crawler) Left() error {
 	if err := c.left.Forward(c.speed); err != nil {
 		return err
 	}
-
 	if err := c.right.Stop(); err != nil {
 		return err
 	}
+
+	c.direction = "left"
 
 	return nil
 }
@@ -128,10 +137,18 @@ func (c *Crawler) Right() error {
 	if err := c.left.Stop(); err != nil {
 		return nil
 	}
-
 	if err := c.right.Forward(c.speed); err != nil {
 		return err
 	}
 
+	c.direction = "right"
+
 	return nil
+}
+
+func (c *Crawler) Status() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.direction
 }
