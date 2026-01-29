@@ -14,7 +14,9 @@ import (
 	"github.com/undeadpelmen/webrobot-robot/hardware/robots"
 	"github.com/undeadpelmen/webrobot-robot/hardware/robots/crawler"
 	"github.com/undeadpelmen/webrobot-robot/web/http"
+	"periph.io/x/conn/v3/gpio/gpioreg"
 	"periph.io/x/conn/v3/gpio/gpiotest"
+	"periph.io/x/host/v3"
 )
 
 var (
@@ -26,6 +28,7 @@ func main() {
 	useCli := flag.Bool("c", false, "use cli instead of hardware")
 	useHttp := flag.Bool("h", false, "use http instead of hardware")
 	debug := flag.Bool("d", false, "enable debug logging")
+	test := flag.Bool("t", false, "enable test logging")
 
 	flag.Parse()
 
@@ -61,8 +64,23 @@ func main() {
 
 	logger.Info().Msg("Start web-based robot control system")
 
+	logger.Debug().Msg("Init periph.io")
+	state, err := host.Init()
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to init periph.io")
+	}
+	//if slices.Contains(state.Loaded, )
+	for _, v := range state.Loaded {
+		fmt.Println(v)
+	}
+
 	logger.Debug().Msg("Create driver")
-	driver, err := l298n.NewFromPins(&gpiotest.Pin{}, &gpiotest.Pin{}, &gpiotest.Pin{}, &gpiotest.Pin{}, &gpiotest.Pin{}, &gpiotest.Pin{}, 255)
+	var driver *l298n.L298N
+	if *test {
+		driver, err = l298n.NewFromPins(&gpiotest.Pin{}, &gpiotest.Pin{}, &gpiotest.Pin{}, &gpiotest.Pin{}, &gpiotest.Pin{}, &gpiotest.Pin{}, 255)
+	} else {
+		driver, err = l298n.NewFromPins(gpioreg.ByName("11"), gpioreg.ByName("13"), gpioreg.ByName("15"), gpioreg.ByName("16"), gpioreg.ByName("18"), gpioreg.ByName("22"), 255)
+	}
 	if err != nil {
 		logger.Panic().Err(err).Msg("")
 	}

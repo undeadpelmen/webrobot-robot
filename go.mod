@@ -36,6 +36,7 @@ require (
 	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/tools v0.34.0 // indirect
 	google.golang.org/protobuf v1.36.9 // indirect
+	periph.io/x/host/v3 v3.8.5 // indirect
 )
 
 require (

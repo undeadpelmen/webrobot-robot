@@ -18,11 +18,7 @@ var (
 )
 
 func ValidCommand(cmd string) bool {
-	if !slices.Contains(Commands, cmd) {
-		return false
-	}
-
-	return true
+	return slices.Contains(Commands, cmd)
 }
 
 type Robot interface {
