@@ -1,4 +1,4 @@
-# /bin/bash
+#! /usr/bin/bash
 
 echo "Start Robot Control System"
 

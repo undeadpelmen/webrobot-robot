@@ -2,16 +2,21 @@ module github.com/undeadpelmen/webrobot-robot
 
 go 1.24.4
 
-require periph.io/x/conn/v3 v3.7.2
+require (
+	github.com/c-bata/go-prompt v0.2.6
+	github.com/gin-gonic/gin v1.11.0
+	github.com/gorilla/websocket v1.5.3
+	github.com/rs/zerolog v1.34.0
+	gopkg.in/yaml.v3 v3.0.1
+	periph.io/x/conn/v3 v3.7.2
+)
 
 require (
 	github.com/bytedance/sonic v1.14.0 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
-	github.com/gin-contrib/cors v1.7.6 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
-	github.com/gin-gonic/gin v1.11.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.27.0 // indirect
@@ -36,17 +41,18 @@ require (
 	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/tools v0.34.0 // indirect
 	google.golang.org/protobuf v1.36.9 // indirect
-	periph.io/x/host/v3 v3.8.5 // indirect
+	periph.io/x/host/v3 v3.8.5
 )
 
 require (
-	github.com/c-bata/go-prompt v0.2.6 // direct
 	github.com/jonboulle/clockwork v0.4.0 // indirect
+	github.com/kr/pretty v0.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mattn/go-tty v0.0.3 // indirect
 	github.com/pkg/term v1.2.0-beta.2 // indirect
-	github.com/rs/zerolog v1.34.0 // direct
+	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
