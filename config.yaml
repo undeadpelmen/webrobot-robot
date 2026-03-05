@@ -1,0 +1,30 @@
+server:
+  host: "0.0.0.0"
+  http_port: 8080
+  websocket_port: 8081
+  enable_http: true
+  enable_websocket: true
+
+robot:
+  speed: 255
+  test_mode: false
+  enable_cli: true
+  auto_connect: true
+
+logging:
+  level: "info"
+  file: "/tmp/webrobot/robot.log"
+  console: true
+  max_size: 10
+  max_backups: 5
+
+hardware:
+  driver: "l298n"
+  test_pins: false
+  pins:
+    enable_a: "11"
+    input1: "13"
+    input2: "15"
+    enable_b: "16"
+    input3: "18"
+    input4: "22"
