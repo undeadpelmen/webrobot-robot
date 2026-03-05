@@ -2,3 +2,5 @@
 robot.log
 build
 .idea
+config.yaml
+bin

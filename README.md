@@ -184,8 +184,41 @@ robotService := robot.NewService(driver, logger)
 
 ## Installation
 
+### Automated Installation (Recommended)
+
+Use the provided install script for automated setup:
+
+```bash
+# Clone the repository
+git clone https://github.com/undeadpelmen/webrobot-robot.git
+cd webrobot-robot
+
+# Run the install script
+./install.sh
+
+# Optional: Install with systemd service (requires sudo)
+./install.sh --systemd
+
+# Optional: Run tests after installation
+./install.sh --test
+
+# Show install script options
+./install.sh --help
+```
+
+The install script will:
+- Check for required dependencies (Go, Git)
+- Install Go modules
+- Build the application
+- Create default configuration file
+- Set up log directory
+- Optionally create a systemd service
+
+### Manual Installation
+
 ```shell
 git clone https://github.com/undeadpelmen/webrobot-robot.git
 cd webrobot-robot
 go mod tidy
+go build -o bin/robot ./cmd/robot
 ```
